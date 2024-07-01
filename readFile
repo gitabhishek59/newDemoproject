@@ -1,0 +1,40 @@
+import os
+import pandas as pd
+import msoffcrypto
+from io import BytesIO
+
+# Define the main folder path and the password
+main_folder = 'path_to_main_folder'
+password = 'your_password'
+
+# Initialize an empty list to store dataframes
+dfs = []
+
+# Loop through each subfolder in the main folder
+for subfolder in os.listdir(main_folder):
+    subfolder_path = os.path.join(main_folder, subfolder)
+    if os.path.isdir(subfolder_path):
+        # Loop through each file in the subfolder
+        for file in os.listdir(subfolder_path):
+            if file.endswith('.xlsx'):
+                file_path = os.path.join(subfolder_path, file)
+                # Decrypt the Excel file
+                decrypted = BytesIO()
+                with open(file_path, 'rb') as f:
+                    file = msoffcrypto.OfficeFile(f)
+                    file.load_key(password=password)
+                    file.decrypt(decrypted)
+                decrypted.seek(0)
+                # Read the decrypted Excel file
+                df = pd.read_excel(decrypted)
+                dfs.append(df)
+
+# Concatenate all the dataframes
+combined_df = pd.concat(dfs, ignore_index=True)
+
+# Group by the 'pattern' column and arrange in descending order
+grouped_df = combined_df.groupby('pattern').size().reset_index(name='count')
+sorted_df = grouped_df.sort_values(by='count', ascending=False)
+
+print(sorted_df)
+eee
